@@ -159,8 +159,7 @@
                                     "name": "computediskSize",
                                     "type": "Microsoft.Compute.SizeSelector",
                                     "label": "Size",
-                                    "toolTip": "compuute disk size",
-                                    "defaultValue": "1024 GB",
+                                    "toolTip": "Compute disk size",
                                     "recommendedSizes": [
                                         "Standard_D1",
                                         "Standard_D2",
