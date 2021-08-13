@@ -1,0 +1,527 @@
+{
+    "$schema": ".\\createFormUI.schema.json",
+    "view": {
+        "kind": "Form",
+        "properties": {
+            "title": "Create a scalable WordPress",
+            "steps": [
+                {
+                    "name": "basics",
+                    "label": "Basics",
+                    "elements": [
+                        {
+                            "name": "resourceScope",
+                            "type": "Microsoft.Common.ResourceScope",
+                            "location": {
+                                "resourceTypes": [
+                                    "microsoft.resources/resourcegroups"
+                                ]
+                            }
+                        },
+                        {
+                            "name": "name",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "Name",
+                            "defaultValue": "",
+                            "constraints": {
+                                "required": true
+                            },
+                            "visible": true
+                        },
+                        {
+                            "name": "deploymentSize",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Deployment size",
+                            "defaultValue": "",
+                            "toolTip": "select deployment size",
+                            "constraints": {
+                                "required": true,
+                                "allowedValues": [
+                                    {
+                                        "label": "Minimal",
+                                        "value": "minimal"
+                                    },
+                                    {
+                                        "label": "Small",
+                                        "value": "small"
+                                    },
+                                    {
+                                        "label": "Medium",
+                                        "value": "medium"
+                                    },
+                                    {
+                                        "label": "Large",
+                                        "value": "large"
+                                    }
+                                ]
+                            },
+                            "visible": true
+                        },
+                        {
+                            "name": "sshPublicKey",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "SSH Public Key",
+                            "defaultValue": "",
+                            "toolTip": "ssh public key",
+                            "constraints": {
+                                "required": true,
+                                "allowedValues": [
+                                    {
+                                        "label": "Generate SSH key",
+                                        "value": "generateSSH"
+                                    },
+                                    {
+                                        "label": "Use existing key stored in Azure",
+                                        "value": "storedinAzure"
+                                    },
+                                    {
+                                        "label": "Use existing public key",
+                                        "value": "publicKey"
+                                    }
+                                ]
+                            },
+                            "visible": true
+                        }
+                    ]
+                },
+                {
+                    "name": "computeStorage",
+                    "label": "Compute + Storage",
+                    "elements": [
+                        {
+                            "name": "Compute",
+                            "type": "Microsoft.Common.Section",
+                            "label": "Compute",
+                            "elements": [
+                                {
+                                    "name": "compute",
+                                    "type": "Microsoft.Common.OptionsGroup",
+                                    "label": "Size and Pricing",
+                                    "defaultValue": "[concat('Recommended {',if(equals(steps('basics').deploymentSize, 'minimal'), '10', if(equals(steps('basics').deploymentSize, 'small'), '20', if(equals(steps('basics').deploymentSize, 'medium'), '150', '300'))) ,' GB)')]",
+                                    "toolTip": "compute",
+                                    "constraints": {
+                                        "required": false,
+                                        "allowedValues": [
+                                            {
+                                                "label": "[concat('Recommended {',if(equals(steps('basics').deploymentSize, 'minimal'), '10', if(equals(steps('basics').deploymentSize, 'small'), '20', if(equals(steps('basics').deploymentSize, 'medium'), '150', '300'))) ,' GB)')]",
+                                                "value": "recommended"
+                                            },
+                                            {
+                                                "label": "Custom",
+                                                "value": "custom"
+                                            }
+                                        ]
+                                    },
+                                    "visible": true
+                                },
+                                {
+                                    "name": "vmscaleset",
+                                    "type": "Microsoft.Common.TextBox",
+                                    "label": "Virtual Machine Scale Set Name",
+                                    "defaultValue": "",
+                                    "toolTip": "Switch to configure AzureBackup and enlist VM's",
+                                    "constraints": {
+                                        "required": false
+                                    },
+                                    "visible": "[equals(steps('computeStorage').Compute.compute,'custom')]"
+                                },
+                                {
+                                    "name": "orchestrationmode",
+                                    "type": "Microsoft.Common.OptionsGroup",
+                                    "label": "Orchestration Mode",
+                                    "defaultValue": "Uniform",
+                                    "toolTip": "Orchestration Mode",
+                                    "constraints": {
+                                        "required": false,
+                                        "allowedValues": [
+                                            {
+                                                "label": "Uniform",
+                                                "value": "uniform"
+                                            },
+                                            {
+                                                "label": "Flexible",
+                                                "value": "flexible"
+                                            }
+                                        ]
+                                    },
+                                    "visible": "[equals(steps('computeStorage').Compute.compute,'custom')]"
+                                },
+                                {
+                                    "name": "azurespotinstance",
+                                    "type": "Microsoft.Common.CheckBox",
+                                    "label": "Azure Spot Instance",
+                                    "constraints": {
+                                        "required": false
+                                    },
+                                    "visible": "[equals(steps('computeStorage').Compute.compute,'custom')]"
+                                },
+                                {
+                                    "name": "computediskSize",
+                                    "type": "Microsoft.Compute.SizeSelector",
+                                    "label": "Size",
+                                    "toolTip": "compuute disk size",
+                                    "defaultValue": "1024 GB",
+                                    "recommendedSizes": [
+                                        "Standard_D1",
+                                        "Standard_D2",
+                                        "Standard_D3"
+                                    ],
+                                    "constraints": {
+                                        "numAvailabilityZonesRequired": 3,
+                                        "zone": "3"
+                                    },
+                                    "options": {
+                                        "hideDiskTypeFilter": false
+                                    },
+                                    "osPlatform": "Linux",
+                                    "imageReference": {
+                                        "publisher": "MicrosoftWindowsServer",
+                                        "offer": "WindowsServer",
+                                        "sku": "2012-R2-Datacenter"
+                                    },
+                                    "count": 2,
+                                    "visible": "[equals(steps('computeStorage').Compute.compute,'custom')]"
+                                }
+                            ],
+                            "visible": true
+                        },
+                        {
+                            "name": "sharedStorage",
+                            "type": "Microsoft.Common.Section",
+                            "label": "Shared Storage",
+                            "elements": [
+                                {
+                                    "name": "storagesizePricing",
+                                    "type": "Microsoft.Common.OptionsGroup",
+                                    "label": "Size and Pricing",
+                                    "defaultValue": "Recommended",
+                                    "toolTip": "Shared Storage",
+                                    "constraints": {
+                                        "required": false,
+                                        "allowedValues": [
+                                            {
+                                                "label": "Recommended",
+                                                "value": "recommended"
+                                            },
+                                            {
+                                                "label": "Custom",
+                                                "value": "custom"
+                                            }
+                                        ]
+                                    },
+                                    "visible": true
+                                },
+                                {
+                                    "name": "storageaccountName",
+                                    "type": "Microsoft.Common.TextBox",
+                                    "label": "Storage Account Name",
+                                    "defaultValue": "",
+                                    "toolTip": "storage account name",
+                                    "constraints": {
+                                        "required": true,
+                                        "regex": "",
+                                        "validationMessage": ""
+                                    },
+                                    "visible": "[equals(steps('computeStorage').sharedStorage.storagesizePricing,'custom')]"
+                                },
+                                {
+                                    "name": "redundancy",
+                                    "type": "Microsoft.Common.DropDown",
+                                    "label": "Redundancy",
+                                    "defaultValue": "",
+                                    "toolTip": "select redundancy",
+                                    "constraints": {
+                                        "required": true,
+                                        "allowedValues": [
+                                            {
+                                                "label": "Locally redundant storage (LRS)",
+                                                "value": "lrs"
+                                            }
+                                        ]
+                                    },
+                                    "visible": "[equals(steps('computeStorage').sharedStorage.storagesizePricing,'custom')]"
+                                }
+                            ],
+                            "visible": true
+                        }
+                    ],
+                    "visible": true
+                },
+                {
+                    "name": "database",
+                    "label": "Database",
+                    "elements": [
+                        {
+                            "name": "section1",
+                            "type": "Microsoft.Common.Section",
+                            "label": "Example section",
+                            "elements": [
+                                {
+                                    "name": "serverName",
+                                    "type": "Microsoft.Common.TextBox",
+                                    "label": "Server Name",
+                                    "defaultValue": "",
+                                    "toolTip": "server name",
+                                    "constraints": {
+                                        "required": true,
+                                        "regex": "",
+                                        "validationMessage": ""
+                                    },
+                                    "visible": true
+                                },
+                                {
+                                    "name": "workloadType",
+                                    "type": "Microsoft.Common.OptionsGroup",
+                                    "label": "Workoad type",
+                                    "defaultValue": "Production (small to medium)",
+                                    "toolTip": "Shared Storage",
+                                    "constraints": {
+                                        "required": false,
+                                        "allowedValues": [
+                                            {
+                                                "label": "Production (small to medium)",
+                                                "value": "prodsmallmed"
+                                            },
+                                            {
+                                                "label": "Production (Large)",
+                                                "value": "prodlarge"
+                                            },
+                                            {
+                                                "label": "Development",
+                                                "value": "development"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "name": "mysqlversion",
+                                    "type": "Microsoft.Common.DropDown",
+                                    "label": "MySQL version",
+                                    "defaultValue": "80.1.12",
+                                    "toolTip": "select redundancy",
+                                    "constraints": {
+                                        "required": true,
+                                        "allowedValues": [
+                                            {
+                                                "label": "80.1.12",
+                                                "value": "v1"
+                                            }
+                                        ]
+                                    },
+                                    "visible": true
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "networking",
+                    "label": "Networking",
+                    "elements": [
+                        {
+                            "name": "network-connectivity",
+                            "type": "Microsoft.Common.Section",
+                            "label": "Network connectivity",
+                            "elements": [
+                                {
+                                    "name": "networkingInfo",
+                                    "type": "Microsoft.Common.TextBlock",
+                                    "visible": true,
+                                    "options": {
+                                        "text": "You can connect to your storage account either publicly, via public IP addresses or service endpoints, or privately, using a private endpoint.",
+                                        "link": {
+                                            "label": "",
+                                            "uri": ""
+                                        }
+                                    }
+                                },
+                                {
+                                    "name": "Connectivity-method",
+                                    "type": "Microsoft.Common.OptionsGroup",
+                                    "label": "Connectivity Method",
+                                    "defaultValue": "Public access (allowed IP addresses)",
+                                    "toolTip": "TBD- Ask Umakanth",
+                                    "constraints": {
+                                        "allowedValues": [
+                                            {
+                                                "label": "Public access (allowed IP addresses)",
+                                                "value": "public"
+                                            },
+                                            {
+                                                "label": "Privateaccess (VNet integration)",
+                                                "value": "private"
+                                            }
+                                        ],
+                                        "required": true
+                                    },
+                                    "visible": true
+                                }
+                            ],
+                            "visible": true
+                        },
+                        {
+                            "name": "sectionFirewall",
+                            "type": "Microsoft.Common.Section",
+                            "label": "Firewall rules",
+                            "elements": [
+                                {
+                                    "name": "firewall-info",
+                                    "type": "Microsoft.Common.TextBlock",
+                                    "visible": true,
+                                    "options": {
+                                        "text": "Inbound connections from the IP addresses specified below will be allowed to port 3306 on this server.",
+                                        "link": {
+                                            "label": "Learn more",
+                                            "uri": "TBD"
+                                        }
+                                    }
+                                },
+                                {
+                                    "name": "allow-access-to-azure",
+                                    "type": "Microsoft.Common.CheckBox",
+                                    "label": "Allow public access from any Azure service within Azure to this server",
+                                    "toolTip": "TBD- Ask Umakanth",
+                                    "constraints": {
+                                        "required": false
+                                    }
+                                },
+                                {
+                                    "name": "firewall-rules",
+                                    "type": "Microsoft.Common.EditableGrid",
+                                    "ariaLabel": "Enter Firewall Rules",
+                                    "label": "firewall",
+                                    "constraints": {
+                                        "width": "Full",
+                                        "rows": {
+                                            "count": {
+                                                "min": 1,
+                                                "max": 10
+                                            }
+                                        },
+                                        "columns": [
+                                            {
+                                                "id": "firewallrule-row",
+                                                "header": "Firewall rule name",
+                                                "width": "1fr",
+                                                "element": {
+                                                    "type": "Microsoft.Common.TextBox",
+                                                    "placeholder": "Firewall rule name",
+                                                    "constraints": {
+                                                        "required": true,
+                                                        "validations": []
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "id": "startIP",
+                                                "header": "Start IP address",
+                                                "width": "1fr",
+                                                "element": {
+                                                    "type": "Microsoft.Common.TextBox",
+                                                    "placeholder": "Start IP address",
+                                                    "constraints": {
+                                                        "required": true,
+                                                        "validations": []
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "id": "endIP",
+                                                "header": "End IP address",
+                                                "width": "1fr",
+                                                "element": {
+                                                    "type": "Microsoft.Common.TextBox",
+                                                    "placeholder": "End IP address",
+                                                    "constraints": {
+                                                        "required": true,
+                                                        "validations": []
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "resourceTypeMetadata": []
+                                }
+                            ],
+                            "visible": true
+                        }
+                    ]
+                },
+                {
+                    "name": "caching-searching",
+                    "label": "Caching + Search",
+                    "elements": [
+                        {
+                            "name": "redis-cache",
+                            "type": "Microsoft.Common.Section",
+                            "label": "Redis cache",
+                            "elements": [
+                                {
+                                    "name": "dns-name",
+                                    "type": "Microsoft.Common.TextBox",
+                                    "label": "DNS name",
+                                    "defaultValue": "",
+                                    "constraints": {
+                                        "required": true
+                                    },
+                                    "resourceTypeMetadata": []
+                                },
+                                {
+                                    "name": "cache-type",
+                                    "type": "Microsoft.Common.DropDown",
+                                    "label": "Cache type",
+                                    "defaultValue": "Enterprise E100(100 GB cache, Replication)",
+                                    "toolTip": "TBD",
+                                    "constraints": {
+                                        "allowedValues": [
+                                            {
+                                                "label": "Enterprise E100(100 GB cache, Replication)",
+                                                "value": "e100"
+                                            },
+                                            {
+                                                "label": "Enterprise E200(200 GB cache, Replication)",
+                                                "value": "e200"
+                                            },
+                                            {
+                                                "label": "Enterprise E500(500 GB cache, Replication)",
+                                                "value": "e500"
+                                            }
+                                        ],
+                                        "required": true
+                                    },
+                                    "visible": true,
+                                    "resourceTypeMetadata": []
+                                },
+                                {
+                                    "name": "memcached-instance",
+                                    "type": "Microsoft.Common.CheckBox",
+                                    "label": "Memcached instance",
+                                    "toolTip": "TBD- Ask Umakanth",
+                                    "constraints": {
+                                        "required": false
+                                    }
+                                },
+                                {
+                                    "name": "search",
+                                    "type": "Microsoft.Common.CheckBox",
+                                    "label": "Search",
+                                    "toolTip": "TBD- Ask Umakanth",
+                                    "constraints": {
+                                        "required": false
+                                    }
+                                }
+                            ],
+                            "visible": true
+                        }
+                    ]
+                },
+                {
+                    "name": "monitoring-backup",
+                    "label": "Monitoring + backup",
+                    "elements": []
+                }
+            ]
+        },
+        "outputs": {}
+    }
+}
