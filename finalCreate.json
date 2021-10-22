@@ -1,0 +1,399 @@
+{
+    "$schema":".\\createFormUI.schema.json",
+    "view":{
+       "kind":"Form",
+       "properties":{
+          "title":"WordPress Deployment",
+          "steps":[
+             {
+                "name":"basics",
+                "label":"Basics",
+                "elements":[
+                           {
+                             "name": "resourceScope",
+                             "type": "Microsoft.Common.ResourceScope",
+                             "location": {
+                                 "resourceTypes": [
+                                     "microsoft.resources/resourcegroups"
+                                 ]
+                             }
+                         },{
+                            "name":"name",
+                            "type":"Microsoft.Common.TextBox",
+                            "label":"Name",
+                            "defaultValue":"",
+                            "constraints":{
+                               "required":true
+                             },
+                            "visible": true
+                 },{
+					 "name": "locationselector",
+					 "type": "Microsoft.Common.LocationSelector"
+
+				 },{
+                     "name": "cmapplication",
+                     "type": "Microsoft.Common.OptionsGroup",
+                     "label": "CMS application",
+                     "defaultValue": "Scalable WordPress",
+                     "toolTip": "",
+                     "constraints": {
+                         "allowedValues": [
+                         {
+                             "label": "Scalable WordPress",
+                             "value": "scalablewordpress"
+                         },
+                         {
+                             "label": "None (Generic LAMP stack)",
+                             "value": "genericlamp"
+                         }
+                         ],
+                         "required": true
+                     },
+                     "visible": true
+                     },
+                   {
+                      "name":"deploymentSize",
+                      "type":"Microsoft.Common.DropDown",
+                      "label":"Deployment size",
+                      "defaultValue":"",
+                      "toolTip":"select deployment size",
+                      "constraints":{
+                         "required":true,
+                         "allowedValues":[
+                            {
+                               "label":"Minimal",
+                               "value":"minimal"
+                            },
+                            {
+                               "label":"Small",
+                               "value":"small"
+                            },
+                            {
+                               "label":"Medium",
+                               "value":"medium"
+                            },
+                            {
+                               "label":"Large",
+                               "value":"large"
+                            }
+                         ]
+                      },
+                      "visible":true
+                   },{
+                         "name": "domainname",
+                         "type": "Microsoft.Common.TextBox",
+                         "label": "Domain name",
+                         "defaultValue": "",
+                         "toolTip": "Use only allowed characters",
+                         "placeholder": "",
+                         "multiLine": false,
+                         "constraints": {
+                             "required": true
+                         },
+                         "visible": true
+                         }
+                   ,{
+                     "name": "controllervm",
+                     "type": "Microsoft.Common.Section",
+                     "label": "Controller VM details",
+                     "elements": [
+                         {
+                             "name": "username",
+                             "type": "Microsoft.Common.TextBox",
+                             "label": "Username",
+                             "defaultValue": "",
+                             "toolTip": "Use only allowed characters",
+                             "placeholder": "",
+                             "multiLine": false,
+                             "constraints": {
+                                 "required": true
+                             },
+                             "visible": true
+                         },
+                         {
+                             "name":"sshPublicKey",
+                             "type":"Microsoft.Common.DropDown",
+                             "label":"SSH Public Key",
+                             "defaultValue":"",
+                             "toolTip":"ssh public key",
+                             "constraints":{
+                                 "required":true,
+                                 "allowedValues":[
+                                 {
+                                     "label":"Use existing key stored in Azure",
+                                     "value":"storedinAzure"
+                                 },{
+                                         "label": "Use existing public key",
+                                         "value":  "publicKey"
+                                 }
+                                 ]
+                             },
+                             "visible":true
+                     },{
+                         "name": "pastessh",
+                         "type": "Microsoft.Common.TextBox",
+                         "label": "Paste SSH key",
+                         "defaultValue": "contoso123",
+                         "toolTip": "Use only allowed characters",
+                         "placeholder": "",
+                         "multiLine": true,
+                         "constraints": {
+                             "required": false
+                         },
+                         "visible": "[equals(steps('basics').controllervm.sshPublicKey, 'publicKey')]"
+                     },{
+                         "name": "storageSelector",
+                         "type": "Microsoft.Solutions.ResourceSelector",
+                         "label": "Select SSH key",
+                         "resourceType": "Microsoft.Compute/sshPublicKeys",
+                         "options": {
+                             "filter": {
+                                 "subscription": "onBasics",
+                                 "location": "onBasics"
+                             }
+                         },
+                         "visible": "[equals(steps('basics').controllervm.sshPublicKey, 'storedinAzure')]"
+                     }	
+                     ],
+                     "visible": true
+                 },{
+                     "name": "databasesettings",
+                             "type": "Microsoft.Common.Section",
+                             "label": "Database Settings",
+                             "elements": [
+                                 {
+                                     "name": "databaeuserame",
+                                     "type": "Microsoft.Common.TextBox",
+                                     "label": "Username",
+                                     "defaultValue": "",
+                                     "toolTip": "Use only allowed characters",
+                                     "placeholder": "",
+                                     "multiLine": false,
+                                     "constraints": {
+                                         "required": true,
+                                         "validations": [
+                                         {
+                                             "regex": "^[a-z0-9A-Z]{1,30}$",
+                                             "message": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+                                         }
+                                         ]
+                                     },
+                                     "visible": true
+                                     },
+                                 {
+                                     "name": "element1",
+                                     "type": "Microsoft.Common.PasswordBox",
+                                     "label": {
+                                         "password": "Password",
+                                         "confirmPassword": "Confirm password"
+                                     },
+                                     "toolTip": "",
+                                     "constraints": {
+                                         "required": true,
+                                         "regex": "^[a-zA-Z0-9]{8,}$",
+                                         "validationMessage": "Password must be at least 8 characters long, contain only numbers and letters"
+                                     },
+                                     "options": {
+                                         "hideConfirmation": false
+                                     },
+                                     "visible": true
+                                     }
+                             ],
+                             "visible": true
+                             }
+                ]
+             },
+             {
+                "name":"advanced",
+                "label":"Advanced",
+                "elements":[
+                   {
+                      "name":"compute",
+                      "type":"Microsoft.Common.Section",
+                      "label":"Compute",
+                      "elements":[
+                         {
+                            "name":"vmscaleset",
+                            "type":"Microsoft.Common.TextBox",
+                            "label":"Virtual Machine Scale Set Name",
+                            "defaultValue":"",
+                            "toolTip":"Enter scale set name",
+                            "constraints":{
+                               "required": true
+                             },
+                            "visible": true
+                         },
+                         {
+                             "name": "computediskSize",
+                             "type": "Microsoft.Compute.SizeSelector",
+                             "label": "Size",
+                             "toolTip": "compuute disk size",
+                             "defaultValue":  "1024 GB",
+                             "recommendedSizes": [
+                                 "Standard_D1",
+                                 "Standard_D2",
+                                 "Standard_D3"
+                             ],
+                             "constraints": {
+                                 "numAvailabilityZonesRequired": 3,
+                                 "zone": "3"
+                             },
+                             "options": {
+                                 "hideDiskTypeFilter": false
+                             },
+                             "osPlatform": "Linux",
+                             "imageReference": {
+                                 "publisher": "MicrosoftWindowsServer",
+                                 "offer": "WindowsServer",
+                                 "sku": "2012-R2-Datacenter"
+                             },
+                             "count": 2,
+                             "visible": true
+                        }
+                      ],
+                      "visible": true
+                   },{
+                       
+                          "name":"db",
+                          "type":"Microsoft.Common.Section",
+                          "label":"Database",
+                          "elements":[
+                            {
+                                "name":"serverName",
+                                "type":"Microsoft.Common.TextBox",
+                                "label":"Server Name",
+                                "defaultValue":"",
+                                "toolTip":"server name",
+                                "constraints":{
+                                   "required":true,
+                                   "regex":"",
+                                   "validationMessage":""
+                                },
+                                "visible": true
+                            },{
+                                 "type": "Microsoft.Solutions.BladeInvokeControl",
+                                 "name": "mysqldb",
+                                 "openBladeStatus": "[steps('advanced').db.dbselector.changing]",
+                                 "bladeReference": {
+                                     "name": "MySqlFlexibleServerConfigureBlade",
+                                     "extension": "Microsoft_Azure_OSSDatabases",
+                                     "parameters": {
+                                        "subscriptionId": "b1275574-d623-476f-aa26-c5322279c1c7",
+                                        "serverName": "",
+                                        "vCores": 1,
+                                        "vmName": "Standard_B1ms",
+                                        "storageSizeInGiB": 2,
+                                        "haEnabled": false, 
+                                        "resourceGroupName": "test1ssh",
+                                        "region": "eastus2",
+                                        "mode": "Create",
+                                        "serverEdition": "Burstable",
+                                        "backupRetentionDays": 7,
+                                        "geoRedundantBackup": false,
+                                        "version": "5.7",
+                                        "selectedIOPS": 640,
+                                        "maxFreeIOPS": 800,
+                                        "customIOPSFeatureOn": false,
+                                        "isHAV2Enabled": false,
+                                        "primaryAZ": "",
+                                        "haStandbyAZ": "",
+                                        "supportsHA": false,
+                                        "supportedHAMode": ["SameZone","ZoneRedundant"]
+                                     }
+                                 }
+                             },
+                             {
+                                 "type": "Microsoft.Common.Selector",
+                                 "name": "dbselector",
+                                 "label": "My SQL database selector",
+                                 "keyPath": "serverEdition",
+                                 "value": "[steps('advanced').db.mysqldb]"
+                             }
+                          ]
+                 },
+                 {
+                    "name":"network",
+                    "type":"Microsoft.Common.Section",
+                    "label":"Network Configuration",
+                    "elements":[
+                        {
+                            "name": "contentdistribution",
+                            "type": "Microsoft.Common.CheckBox",
+                            "label": "Enable Content Distribution",
+                            "toolTip": "content distribution",
+                            "constraints": {
+                                "required": false
+                            }
+                        },{
+                            "name": "loadbalancingoption",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "Load Balancing Option",
+                            "defaultValue": "load balancing option",
+                            "toolTip": "",
+                            "constraints": {
+                                "allowedValues": [
+                                {
+                                    "label": "Azure application gateway",
+                                    "value": "azureappgateway"
+                                },
+                                {
+                                    "label": "Load balancer",
+                                    "value": "loadbalancer"
+                                }
+                                ],
+                                "required": true
+                            },
+                            "visible": true
+                        }  
+                    ]
+                 },                 
+                 {
+                    "name":"cacheconfig",
+                    "type":"Microsoft.Common.Section",
+                    "label":"Cache Configuration",
+                    "elements":[
+                        {
+                            "name": "dnsname",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "DNS name",
+                            "toolTip": "dnsname",
+                            "constraints": {
+                                "required": false
+                            },
+                            "subLabel": ".eastus.redisenterprise.cache.azure.net"
+                        },
+                            {
+                                "name": "enterprisesearch",
+                                "type": "Microsoft.Common.CheckBox",
+                                "label": "Enable Enterprise Search",
+                                "toolTip": "",
+                                "constraints": {
+                                    "required": false
+                                }
+                            }                   
+                        ]
+                 }
+                ],
+                "visible": true
+             }
+          ]
+       },
+		"deployment": {
+                "parameters": {
+                },
+                "kind": "ResourceGroup",
+                "resourceGroupId": "[steps('basics').resourceScope.resourceGroup.id]",
+                "template": {
+                    "file": "<ARM deployment template relative path>"
+                }
+            },       
+		"outputs":{
+             "parameters": {
+             },
+             "location": "[steps('basics').resourceScope.location.name]",
+             "resourceGroupId": "[steps('basics').resourceScope.resourceGroup.id]",
+             "subscriptionId": "[steps('basics').resourceScope.subscription.subscriptionId]"
+          
+       }
+    }
+ }
