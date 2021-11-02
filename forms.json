@@ -1,0 +1,419 @@
+{
+  "$schema": "../../Definitions/dx.schema.json",
+  "stringSource": "./CreateStrings.resjson",
+  "view": {
+    "kind": "Form",
+    "properties": {
+      "title": "Create a Linux Workload",
+      "steps": [
+        {
+          "name": "basics",
+          "label": "Basics",
+          "elements": [
+            {
+              "name": "resourceScope",
+              "type": "Microsoft.Common.ResourceScope",
+              "location": {
+                "resourceTypes": [
+                  "microsoft.resources/resourcegroups"
+                ]
+              }
+            },
+            {
+              "name": "deploymentSize",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Deployment size",
+              "defaultValue": "",
+              "toolTip": "select deployment size",
+              "constraints": {
+                "required": true,
+                "allowedValues": [
+                  {
+                    "label": "Small",
+                    "value": "small"
+                  },
+                  {
+                    "label": "Medium",
+                    "value": "medium"
+                  },
+                  {
+                    "label": "Large",
+                    "value": "large"
+                  },
+                  {
+                    "label": "Maximum Size",
+                    "value": "maximum-size"
+                  }
+                ]
+              },
+              "visible": true
+            },
+            {
+              "name": "domainname",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Domain name",
+              "defaultValue": "",
+              "toolTip": "Enter domain name",
+              "placeholder": "",
+              "multiLine": false,
+              "constraints": {
+                "required": true
+              },
+              "visible": true
+            },
+            {
+              "name": "controllervm",
+              "type": "Microsoft.Common.Section",
+              "label": "Controller VM details",
+              "elements": [
+                {
+                  "name": "username",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Username",
+                  "defaultValue": "",
+                  "toolTip": "Enter username for controller vm",
+                  "placeholder": "",
+                  "multiLine": false,
+                  "constraints": {
+                    "required": true
+                  },
+                  "visible": true
+                },
+                {
+                  "name": "sshPublicKey",
+                  "type": "Microsoft.Common.DropDown",
+                  "label": "SSH Public Key",
+                  "defaultValue": "",
+                  "toolTip": "ssh public key",
+                  "constraints": {
+                    "required": true,
+                    "allowedValues": [
+                      {
+                        "label": "Generate SSH Key",
+                        "value": "genssh"
+                      },
+                      {
+                        "label": "Use existing key stored in Azure",
+                        "value": "storedinAzure"
+                      },
+                      {
+                        "label": "Use existing public key",
+                        "value": "publicKey"
+                      }
+                    ]
+                  },
+                  "visible": true
+                },
+                {
+                  "name": "pastessh",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Paste SSH key",
+                  "defaultValue": "",
+                  "toolTip": "paste the ssh key into the text box",
+                  "placeholder": "",
+                  "multiLine": true,
+                  "constraints": {
+                    "required": false
+                  },
+                  "visible": "[equals(steps('basics').controllervm.sshPublicKey, 'publicKey')]"
+                },
+                {
+                  "name": "sshkeySelector",
+                  "type": "Microsoft.Solutions.ResourceSelector",
+                  "label": "Select SSH key",
+                  "resourceType": "Microsoft.Compute/sshPublicKeys",
+                  "scope": {
+                    "subscriptionId": "[steps('basics').resourceScope.subscription.subscriptionId]",
+                    "location": "[steps('basics').resourceScope.location.name]"
+                  },
+                  "visible": "[equals(steps('basics').controllervm.sshPublicKey, 'storedinAzure')]"
+                },
+                {
+                  "name": "getsshkey",
+                  "type": "Microsoft.Solutions.ArmApiControl",
+                  "request": {
+                    "method": "GET",
+                    "path": "[concat(steps('basics').resourceScope.subscription.id, '/resourceGroups/', steps('basics').resourceScope.resourceGroup.name, '/providers/Microsoft.Compute/sshPublicKeys/', steps('basics').controllervm.sshkeySelector.name, '?api-version=2021-07-01')]"
+                  }
+                }
+              ],
+              "visible": true
+            },
+            {
+              "name": "databasesettings",
+              "type": "Microsoft.Common.Section",
+              "label": "Database Settings",
+              "elements": [
+                {
+                  "name": "databaeuserame",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Username",
+                  "defaultValue": "",
+                  "toolTip": "Enter database username",
+                  "placeholder": "",
+                  "multiLine": false,
+                  "constraints": {
+                    "required": true
+                  },
+                  "visible": true
+                },
+                {
+                  "name": "dbpassword",
+                  "type": "Microsoft.Common.PasswordBox",
+                  "label": {
+                    "password": "Password",
+                    "confirmPassword": "Confirm password"
+                  },
+                  "toolTip": "enter database password",
+                  "constraints": {
+                    "required": true,
+                    "regex": "^[a-zA-Z0-9]{8,}$",
+                    "validationMessage": "Password must be at least 8 characters long, contain only numbers and letters"
+                  },
+                  "options": {
+                    "hideConfirmation": false
+                  },
+                  "visible": true
+                }
+              ],
+              "visible": true
+            }
+          ]
+        },
+        {
+          "name": "advanced",
+          "label": "Advanced",
+          "elements": [
+            {
+              "name": "compute",
+              "type": "Microsoft.Common.Section",
+              "label": "Compute",
+              "elements": [
+                {
+                  "name": "vmscaleset",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Virtual Machine Scale Set Name",
+                  "defaultValue": "",
+                  "toolTip": "Enter scale set name",
+                  "constraints": {
+                    "required": false
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "Microsoft.Solutions.BladeInvokeControl",
+                  "name": "vmSku",
+                  "transforms": {
+                    "sku": "selectedSpec.id"
+                  },
+                  "openBladeStatus": "[steps('advanced').compute.vmPricing.changing]",
+                  "defaultValue": {
+                    "selectedSpec": {
+                      "id": "Standard_D2s_v3"
+                    }
+                  },
+                  "bladeReference": {
+                    "name": "SpecPickerV2Blade",
+                    "extension": "Microsoft_Azure_Compute",
+                    "parameters": {
+                      "entityId": "",
+                      "recommendedSpecIds": [],
+                      "recentSpecIds": [],
+                      "selectRecommendedView": false,
+                      "regionId": "eastus",
+                      "specFiltering": {
+                        "hideDiskTypeFilter": false
+                      },
+                      "options": {},
+                      "subscriptionId": "[steps('basics').resourceScope.subscription.subscriptionId]"
+                    }
+                  }
+                },
+                {
+                  "type": "Microsoft.Common.Selector",
+                  "name": "vmPricing",
+                  "label": "Size",
+                  "keyPath": "selectedSpec.id",
+                  "defaultValue": {
+                    "selectedSpec": {
+                      "id": "Standard_D2s_v3"
+                    }
+                  },
+                  "value": "[steps('advanced').compute.vmSku]"
+                }
+              ],
+              "visible": true
+            },
+            {
+              "name": "db",
+              "type": "Microsoft.Common.Section",
+              "label": "Database",
+              "elements": [
+                {
+                  "name": "serverName",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Server Name",
+                  "defaultValue": "",
+                  "toolTip": "server name",
+                  "constraints": {
+                    "required": false
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "Microsoft.Solutions.BladeInvokeControl",
+                  "name": "mysqldb",
+                  "transforms": {
+                    "sku": "{\"boldText\": serverEdition, \"subText\": vmName}"
+                  },
+                  "defaultValue": {
+                    "boldText": "Burstable",
+                    "subText": "Standard_BIms"
+                  },
+                  "openBladeStatus": "[steps('advanced').db.dbselector.changing]",
+                  "bladeReference": {
+                    "name": "MySqlFlexibleServerConfigureBlade",
+                    "extension": "Microsoft_Azure_OSSDatabases",
+                    "parameters": {
+                      "subscriptionId": "b1275574-d623-476f-aa26-c5322279c1c7",
+                      "serverName": "",
+                      "vCores": 1,
+                      "vmName": "Standard_B1ms",
+                      "storageSizeInGiB": 2,
+                      "haEnabled": "Disabled",
+                      "resourceGroupName": "test1ssh",
+                      "region": "eastus2",
+                      "mode": "Create",
+                      "serverEdition": "Burstable",
+                      "backupRetentionDays": 7,
+                      "geoRedundantBackup": false,
+                      "version": "5.7",
+                      "selectedIOPS": 640,
+                      "maxFreeIOPS": 800,
+                      "customIOPSFeatureOn": false,
+                      "isHAV2Enabled": false,
+                      "primaryAZ": "",
+                      "haStandbyAZ": "",
+                      "supportsHA": true,
+                      "supportedHAMode": [ "SameZone", "ZoneRedundant" ]
+                    },
+                    "inFullScreen": true
+                  }
+                },
+                {
+                  "type": "Microsoft.Common.Selector",
+                  "name": "dbselector",
+                  "label": "My SQL database selector",
+                  "keyPath": "boldText",
+                  "descriptionKeyPath": "subText",
+                  "defaultValue": {
+                    "boldText": "Burstable",
+                    "subText": "Standard_BIms"
+                  },
+                  "value": "[steps('advanced').db.mysqldb.transformed.sku]"
+                }
+              ]
+            },
+            {
+              "name": "network",
+              "type": "Microsoft.Common.Section",
+              "label": "Network Configuration",
+              "elements": [
+                {
+                  "name": "contentdistribution",
+                  "type": "Microsoft.Common.CheckBox",
+                  "label": "Enable Content Distribution",
+                  "toolTip": "content distribution",
+                  "constraints": {
+                    "required": false
+                  }
+                },
+                {
+                  "name": "loadbalancingoption",
+                  "type": "Microsoft.Common.OptionsGroup",
+                  "label": "Load Balancing Option",
+                  "defaultValue": "Azure application gateway",
+                  "toolTip": "Select load balancing",
+                  "constraints": {
+                    "allowedValues": [
+                      {
+                        "label": "Azure application gateway",
+                        "value": "azureappgateway"
+                      },
+                      {
+                        "label": "Load balancer",
+                        "value": "loadbalancer"
+                      }
+                    ],
+                    "required": false
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            {
+              "name": "cacheconfig",
+              "type": "Microsoft.Common.Section",
+              "label": "Cache Configuration",
+              "elements": [
+                {
+                  "name": "dnsname",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "DNS name",
+                  "toolTip": "DNS name",
+                  "constraints": {
+                    "required": false
+                  },
+                  "subLabel": "[concat('.', steps('basics').resourceScope.location.name,'.redisenterprise.cache.azure.net')]"
+                },
+                {
+                  "name": "listAvailableContacts",
+                  "type": "Microsoft.Solutions.ArmApiControl",
+                  "request": {
+                    "method": "GET",
+                    "path": "[concat(steps('basics').resourceScope.subscription.id, '/providers/microsoft.cache?api-version=2021-04-01')]",
+                    "transforms": {
+                      "aa": "resourceTypes[?resourceType == 'Redis' || resourceType == 'redisEnterprise'] | [*].{ rt: @.resourceType, locations: @.locations }"
+                    }
+                  }
+                },
+                {
+                  "name": "cachetype",
+                  "type": "Microsoft.Common.DropDown",
+                  "label": "Cache Type",
+                  "placeholder": "Enterprise E10 (12 GB Cache, Replication) - Recommended",
+                  "toolTip": "select cache type",
+                  "constraints": {
+                    "allowedValues": "[parse(concat('[',replace(replace(string(filter(parse('[{\"label\":\"Enterprise E10 (12 GB Cache, Replication) - Recommended\",\"value\":\"E10\"},{\"label\":\"Enterprise E20 (25 GB Cache, Replication)\",\"value\":\"E20\"},{\"label\":\"Enterprise E50 (50 GB Cache, Replication)\",\"value\":\"E50\"},{\"label\":\"Enterprise E100 (100 GB Cache, Replication)\",\"value\":\"E100\"}]'), (entfilter) => contains(map(filter(steps('advanced').cacheconfig.listAvailableContacts.transformed.aa, (item) => and(equals(item.rt, 'redisEnterprise'),contains(item.locations, steps('basics').resourceScope.location.displayName))), (map) => map.rt), 'redisEnterprise'))),'[',''),']',''),first(map(filter(steps('advanced').cacheconfig.listAvailableContacts.transformed.aa, (item) => and(equals(item.rt, 'redisEnterprise'),contains(item.locations, steps('basics').resourceScope.location.displayName))), (map) => if(equals(map.rt,'redisEnterprise'),',',''))),replace(replace(string(filter(parse('[{\"label\":\"Standard C1 (1 GB Cache, Replication) - Recommended\",\"value\":\"C1\"},{\"label\":\"Standard C2 (2.5 GB Cache, Replication)\",\"value\":\"C2\"},{\"label\":\"Standard C3 (6 GB Cache, Replication)\",\"value\":\"C3\"},{\"label\":\"Standard C4 (13 GB Cache, Replication)\",\"value\":\"C4\"},{\"label\":\"Standard C5 (26 GB Cache, Replication)\",\"value\":\"C5\"},{\"label\":\"Standard C6 (53 GB Cache, Replication)\",\"value\":\"C6\"},{\"label\":\"Basic C1 (250 MB Cache, Replication) - Recommended\",\"value\":\"B1\"}]'), (stdfilter) => contains(map(filter(steps('advanced').cacheconfig.listAvailableContacts.transformed.aa, (item) => and(equals(item.rt, 'Redis'),contains(item.locations, steps('basics').resourceScope.location.displayName))), (map) => map.rt), 'Redis'))),'[',''),']',''),']'))]",
+                    "required": false
+                  },
+                  "visible": true
+                },
+                {
+                  "name": "enterprisesearch",
+                  "type": "Microsoft.Common.CheckBox",
+                  "label": "Enable Enterprise Search",
+                  "toolTip": "enable enterprise search",
+                  "constraints": {
+                    "required": false
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "deployment": {
+        "kind": "ResourceGroup",
+        "resourceGroupId": "[steps('basics').resourceScope.resourceGroup.id]",
+        "parameters": {
+          "name": "[steps('basics').resourceScope.resourceName]",
+          "location": "[steps('basics').resourceScope.location.name]"
+        },
+        "template": {
+          "file": "./MyResourceDeploymentTemplate.json"
+        }
+      }
+    }
+  }
+}
